@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>02. 좌측 사이드바</title>
+
+<!-- ============================================================
+     [02] 좌측 사이드바 (Left Sidebar)
+
+     메뉴를 화면 왼쪽에 세로로 쌓는 형태입니다.
+     관리자 페이지처럼 메뉴가 6~10개로 많을 때 씁니다.
+
+     핵심 아이디어
+     - 전체 레이아웃: display:grid + grid-template-columns: 220px 1fr
+       (왼쪽 220px 고정, 오른쪽은 남은 공간 전부)
+     - 사이드바는 position:sticky 로 스크롤해도 붙어 있게
+     - 선택 표시: 배경색 + 왼쪽 세로 막대
+     ============================================================ -->
+
+<style>
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
+    background: #f6f7f9;
+    color: #1f2430;
+    font-size: 14px;
+  }
+
+  /* ---------- 핵심: 2단 레이아웃 ---------- */
+  .layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;  /* 왼쪽 메뉴 / 오른쪽 본문 */
+    min-height: 100vh;
+  }
+
+  /* ---------- 사이드바 ---------- */
+  .side {
+    background: #fff;
+    border-right: 1px solid #e5e7eb;
+    padding: 16px 12px;
+    position: sticky;   /* 본문이 길어져도 메뉴는 화면에 남아 있게 */
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+
+  .side__logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 10px 16px;
+    font-weight: 700;
+    font-size: 16px;
+  }
+
+  .side__mark {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: #3b5bdb;
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 12px;
+  }
+
+  .menu { list-style: none; margin: 0; padding: 0; }
+
+  /* 메뉴 한 줄 */
+  .menu__link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 10px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    font: inherit;
+    color: #4b5563;
+    text-align: left;
+    cursor: pointer;
+    position: relative;   /* 왼쪽 세로 막대를 붙이기 위한 기준 */
+  }
+
+  .menu__link:hover { background: #f1f3f5; color: #1f2430; }
+
+  /* 선택된 메뉴 */
+  .menu__link.is-active {
+    background: #edf2ff;
+    color: #3b5bdb;
+    font-weight: 700;
+  }
+
+  /* 선택된 메뉴 왼쪽에 세로 막대를 그려 현재 위치를 강조 */
+  .menu__link.is-active::before {
+    content: "";
+    position: absolute;
+    left: -12px;              /* 사이드바 안쪽 패딩만큼 밖으로 */
+    top: 8px;
+    bottom: 8px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: #3b5bdb;
+  }
+
+  .menu__icon {
+    width: 18px;
+    text-align: center;
+    font-size: 14px;
+    opacity: .8;
+  }
+
+  .menu__badge {
+    margin-left: auto;
+    font-size: 11px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: #ffe3e3;
+    color: #e03131;
+  }
+
+  /* ---------- 본문 ---------- */
+  .main { padding: 22px 26px 40px; }
+
+  .topline {
+    display: flex;
+    align-items: center;
+    margin-bottom: 18px;
+  }
+
+  .page-title { margin: 0; font-size: 19px; font-weight: 700; }
+
+  .btn {
+    margin-left: auto;
+    padding: 8px 14px;
+    border: 0;
+    border-radius: 8px;
+    background: #3b5bdb;
+    color: #fff;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  .kpis {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .kpi {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+
+  .kpi__label { font-size: 12px; color: #6b7280; }
+  .kpi__value { font-size: 21px; font-weight: 700; margin-top: 2px; }
+
+  /* 막대 그래프 흉내 (실제 차트 라이브러리 없이 div 높이로만) */
+  .chart {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 18px;
+  }
+
+  .chart__title { font-weight: 700; margin-bottom: 14px; }
+
+  .bars {
+    display: flex;
+    align-items: flex-end;   /* 막대를 바닥에 맞춰 정렬 */
+    gap: 10px;
+    height: 120px;
+  }
+
+  .bar {
+    flex: 1;
+    background: #dbe4ff;
+    border-radius: 4px 4px 0 0;
+  }
+
+  .bar--hi { background: #3b5bdb; }
+
+  .card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .card__head { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; font-weight: 700; }
+
+  table { width: 100%; border-collapse: collapse; }
+
+  th, td {
+    padding: 10px 16px;
+    text-align: left;
+    border-bottom: 1px solid #f1f3f5;
+    font-size: 13px;
+  }
+
+  th { color: #6b7280; font-weight: 600; background: #fafbfc; }
+  tr:last-child td { border-bottom: 0; }
+
+  /* ---------- 반응형 ----------
+     화면이 좁아지면 사이드바를 아이콘만 남기고 접어
+     본문 공간을 확보합니다. (모바일 대응은 05번 드로어 참고) */
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 60px 1fr; }
+    .side { padding: 16px 8px; }
+    .side__logo span:last-child,
+    .menu__link span:not(.menu__icon) { display: none; }
+    .menu__link { justify-content: center; }
+    .kpis { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="layout">
+
+    <!-- ---------- 좌측 메뉴 8개 ---------- -->
+    <aside class="side">
+      <div class="side__logo">
+        <span class="side__mark">N</span>
+        <span>Nova Admin</span>
+      </div>
+
+      <ul class="menu">
+        <li><button class="menu__link is-active"><span class="menu__icon">▤</span><span>대시보드</span></button></li>
+        <li><button class="menu__link"><span class="menu__icon">▧</span><span>주문 관리</span><span class="menu__badge">6</span></button></li>
+        <li><button class="menu__link"><span class="menu__icon">▣</span><span>상품 관리</span></button></li>
+        <li><button class="menu__link"><span class="menu__icon">☺</span><span>고객</span></button></li>
+        <li><button class="menu__link"><span class="menu__icon">◫</span><span>재고</span></button></li>
+        <li><button class="menu__link"><span class="menu__icon">◈</span><span>프로모션</span></button></li>
+        <li><button class="menu__link"><span class="menu__icon">◭</span><span>통계</span></button></li>
+        <li><button class="menu__link"><span class="menu__icon">⚙</span><span>설정</span></button></li>
+      </ul>
+    </aside>
+
+    <!-- ---------- 본문 ---------- -->
+    <main class="main">
+      <div class="topline">
+        <h1 class="page-title">대시보드</h1>
+        <button class="btn">보고서 내보내기</button>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi"><div class="kpi__label">이번 달 매출</div><div class="kpi__value">₩138,420,000</div></div>
+        <div class="kpi"><div class="kpi__label">주문 건수</div><div class="kpi__value">2,841</div></div>
+        <div class="kpi"><div class="kpi__label">평균 객단가</div><div class="kpi__value">₩48,700</div></div>
+      </div>
+
+      <div class="chart">
+        <div class="chart__title">주간 주문 추이</div>
+        <!-- 막대 높이는 style 로 직접 지정했습니다. 실제 서비스라면
+             데이터를 계산해 이 값을 넣게 됩니다. -->
+        <div class="bars">
+          <div class="bar" style="height: 46%"></div>
+          <div class="bar" style="height: 62%"></div>
+          <div class="bar" style="height: 38%"></div>
+          <div class="bar" style="height: 78%"></div>
+          <div class="bar bar--hi" style="height: 96%"></div>
+          <div class="bar" style="height: 55%"></div>
+          <div class="bar" style="height: 41%"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card__head">처리 대기 주문</div>
+        <table>
+          <thead>
+            <tr><th>주문번호</th><th>상품</th><th>수량</th><th>금액</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>#20421</td><td>무선 이어폰 Pro</td><td>1</td><td>₩189,000</td></tr>
+            <tr><td>#20420</td><td>USB-C 허브 7in1</td><td>2</td><td>₩78,000</td></tr>
+            <tr><td>#20419</td><td>기계식 키보드</td><td>1</td><td>₩142,000</td></tr>
+            <tr><td>#20418</td><td>노트북 거치대</td><td>3</td><td>₩96,000</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+
+  </div>
+
+<script>
+  /* ------------------------------------------------------------
+     메뉴 선택 표시 바꾸기
+     실제로는 페이지를 이동하겠지만, 예제이므로 선택 표시만 옮깁니다.
+     ------------------------------------------------------------ */
+  document.querySelector('.menu').addEventListener('click', function (e) {
+    var link = e.target.closest('.menu__link');
+    if (!link) return;
+
+    document.querySelectorAll('.menu__link').forEach(function (el) {
+      el.classList.remove('is-active');
+    });
+    link.classList.add('is-active');
+
+    // 본문 제목도 함께 바꿔 "이동한 느낌"을 냅니다.
+    var label = link.querySelector('span:not(.menu__icon)');
+    if (label) document.querySelector('.page-title').textContent = label.textContent;
+  });
+</script>
+</body>
+</html>

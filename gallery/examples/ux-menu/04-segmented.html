@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>04. 세그먼티드 컨트롤</title>
+
+<!-- ============================================================
+     [04] 세그먼티드 컨트롤 (Segmented Control) - 2단 메뉴
+
+     1차: 상단 가로 탭 (큰 분류)
+     2차: 그 아래 알약형 세그먼티드 컨트롤 3개 (좁은 범위 필터)
+
+     핵심 아이디어
+     - 1차와 2차의 "생김새"를 다르게 해서 계층을 눈으로 구분시킵니다.
+       1차는 밑줄, 2차는 알약(pill) 배경.
+       같은 모양으로 두 줄을 쌓으면 사용자가 무엇이 상위인지 헷갈립니다.
+     - 2차는 선택지가 모두 보이므로 드롭다운보다 조작이 빠릅니다.
+     ============================================================ -->
+
+<style>
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
+    background: #f6f7f9;
+    color: #1f2430;
+    font-size: 14px;
+  }
+
+  .header { background: #fff; border-bottom: 1px solid #e5e7eb; }
+
+  .header__top {
+    display: flex;
+    align-items: center;
+    padding: 14px 24px 0;
+  }
+
+  .logo { font-weight: 700; font-size: 16px; }
+
+  .avatar {
+    margin-left: auto;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: #7048e8; color: #fff;
+    display: grid; place-items: center;
+    font-size: 12px; font-weight: 700;
+  }
+
+  /* ---------- 1차 메뉴: 밑줄형 탭 ---------- */
+  .tabs {
+    display: flex;
+    gap: 2px;
+    padding: 10px 24px 0;
+  }
+
+  .tab {
+    padding: 10px 14px;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    color: #6b7280;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+
+  .tab:hover { color: #1f2430; }
+
+  .tab.is-active {
+    color: #1f2430;
+    font-weight: 700;
+    border-bottom-color: #7048e8;
+  }
+
+  /* ---------- 2차 메뉴: 알약형 세그먼티드 컨트롤 ---------- */
+  .subbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 24px;
+  }
+
+  /* 회색 트랙 안에 버튼 3개가 들어 있는 구조 */
+  .segmented {
+    display: inline-flex;
+    padding: 3px;
+    background: #eef0f3;
+    border-radius: 999px;
+  }
+
+  .seg {
+    padding: 6px 16px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    font: inherit;
+    font-size: 13px;
+    color: #6b7280;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+
+  /* 선택된 항목만 흰 알약이 떠오르게 */
+  .seg.is-on {
+    background: #fff;
+    color: #1f2430;
+    font-weight: 700;
+    box-shadow: 0 1px 2px rgba(0,0,0,.12);
+  }
+
+  .subbar__hint { font-size: 12px; color: #98a2b3; }
+
+  /* ---------- 본문 ---------- */
+  .main { padding: 4px 24px 40px; }
+
+  .kpis {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .kpi {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+
+  .kpi__label { font-size: 12px; color: #6b7280; }
+  .kpi__value { font-size: 22px; font-weight: 700; margin-top: 2px; }
+  .kpi__sub   { font-size: 12px; color: #7048e8; }
+
+  .chart {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 18px;
+  }
+
+  .chart__title { font-weight: 700; margin-bottom: 4px; }
+  .chart__desc  { font-size: 12px; color: #98a2b3; margin-bottom: 14px; }
+
+  .bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    height: 130px;
+  }
+
+  .bar {
+    flex: 1;
+    background: #e5dbff;
+    border-radius: 4px 4px 0 0;
+    transition: height .25s ease;   /* 기간을 바꾸면 부드럽게 변함 */
+  }
+
+  .bar--hi { background: #7048e8; }
+
+  .card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .card__head { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; font-weight: 700; }
+
+  table { width: 100%; border-collapse: collapse; }
+
+  th, td {
+    padding: 10px 16px;
+    text-align: left;
+    border-bottom: 1px solid #f1f3f5;
+    font-size: 13px;
+  }
+
+  th { color: #6b7280; font-weight: 600; background: #fafbfc; }
+  tr:last-child td { border-bottom: 0; }
+
+  /* ---------- 반응형 ---------- */
+  @media (max-width: 760px) {
+    .kpis { grid-template-columns: 1fr; }
+    .subbar { flex-wrap: wrap; }
+    .subbar__hint { width: 100%; }
+    .tabs { overflow-x: auto; }
+  }
+</style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="header__top">
+      <span class="logo">Pulse Analytics</span>
+      <span class="avatar">DW</span>
+    </div>
+
+    <!-- 1차 메뉴 -->
+    <nav class="tabs">
+      <button class="tab is-active">개요</button>
+      <button class="tab">트래픽</button>
+      <button class="tab">전환</button>
+      <button class="tab">리포트</button>
+    </nav>
+  </header>
+
+  <!-- 2차 메뉴: 알약형 3개. data-range 로 어떤 기간인지 구분합니다. -->
+  <div class="subbar">
+    <div class="segmented" role="group" aria-label="기간 선택">
+      <button class="seg is-on" data-range="day">일간</button>
+      <button class="seg" data-range="week">주간</button>
+      <button class="seg" data-range="month">월간</button>
+    </div>
+    <span class="subbar__hint">선택한 기간 기준으로 아래 지표가 다시 계산됩니다.</span>
+  </div>
+
+  <main class="main">
+
+    <div class="kpis">
+      <div class="kpi">
+        <div class="kpi__label">방문자</div>
+        <div class="kpi__value" id="kpiVisit">3,412</div>
+        <div class="kpi__sub" id="kpiRange">일간 기준</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi__label">전환</div>
+        <div class="kpi__value" id="kpiConv">184</div>
+        <div class="kpi__sub">전환율 5.4%</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi__label">매출</div>
+        <div class="kpi__value" id="kpiSales">₩8.9M</div>
+        <div class="kpi__sub">목표 대비 92%</div>
+      </div>
+    </div>
+
+    <div class="chart">
+      <div class="chart__title">방문 추이</div>
+      <div class="chart__desc" id="chartDesc">최근 24시간</div>
+      <div class="bars" id="bars"></div>
+    </div>
+
+    <div class="card">
+      <div class="card__head">유입 경로</div>
+      <table>
+        <thead>
+          <tr><th>경로</th><th>세션</th><th>전환</th><th>비중</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>검색</td><td>1,482</td><td>92</td><td>43%</td></tr>
+          <tr><td>직접 유입</td><td>864</td><td>41</td><td>25%</td></tr>
+          <tr><td>소셜</td><td>612</td><td>28</td><td>18%</td></tr>
+          <tr><td>이메일</td><td>454</td><td>23</td><td>14%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+
+<script>
+  /* ------------------------------------------------------------
+     1차 탭: 선택 표시만 옮깁니다.
+     ------------------------------------------------------------ */
+  document.querySelector('.tabs').addEventListener('click', function (e) {
+    var btn = e.target.closest('.tab');
+    if (!btn) return;
+    document.querySelectorAll('.tab').forEach(function (t) { t.classList.remove('is-active'); });
+    btn.classList.add('is-active');
+  });
+
+  /* ------------------------------------------------------------
+     2차 세그먼티드 컨트롤: 고른 기간에 맞춰 숫자와 그래프를 바꿉니다.
+     "필터를 바꾸면 결과가 실제로 바뀐다"는 것을 보여주는 부분입니다.
+     ------------------------------------------------------------ */
+
+  // 기간별 가짜 데이터
+  var DATASET = {
+    day:   { visit: '3,412',  conv: '184',   sales: '₩8.9M',  desc: '최근 24시간',
+             bars: [30, 42, 25, 58, 70, 46, 38, 52, 88, 64, 44, 33] },
+    week:  { visit: '21,904', conv: '1,128', sales: '₩58.2M', desc: '최근 7일',
+             bars: [56, 62, 48, 74, 96, 68, 52] },
+    month: { visit: '92,317', conv: '4,860', sales: '₩241.7M', desc: '최근 30일',
+             bars: [40, 55, 62, 48, 72, 66, 84, 58, 46, 70, 92, 61] }
+  };
+
+  var barsBox = document.getElementById('bars');
+
+  // 막대를 다시 그리는 함수. 가장 큰 값에만 진한 색을 줍니다.
+  function drawBars(values) {
+    var max = Math.max.apply(null, values);
+    barsBox.innerHTML = values.map(function (v) {
+      var cls = (v === max) ? 'bar bar--hi' : 'bar';
+      return '<div class="' + cls + '" style="height:' + v + '%"></div>';
+    }).join('');
+  }
+
+  function applyRange(range) {
+    var d = DATASET[range];
+
+    document.getElementById('kpiVisit').textContent = d.visit;
+    document.getElementById('kpiConv').textContent  = d.conv;
+    document.getElementById('kpiSales').textContent = d.sales;
+    document.getElementById('kpiRange').textContent = d.desc + ' 기준';
+    document.getElementById('chartDesc').textContent = d.desc;
+
+    drawBars(d.bars);
+  }
+
+  document.querySelector('.segmented').addEventListener('click', function (e) {
+    var btn = e.target.closest('.seg');
+    if (!btn) return;
+
+    document.querySelectorAll('.seg').forEach(function (s) { s.classList.remove('is-on'); });
+    btn.classList.add('is-on');
+
+    applyRange(btn.dataset.range);
+  });
+
+  // 첫 화면 그리기
+  applyRange('day');
+</script>
+</body>
+</html>

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>06. 하단 탭바</title>
+
+<!-- ============================================================
+     [06] 하단 탭바 (Bottom Tab Bar)
+
+     모바일 폭 기준 예제입니다.
+     핵심 메뉴 4개를 화면 아래에 항상 고정해 둡니다.
+     엄지가 닿는 범위 안이라 한 손 조작이 편합니다.
+
+     핵심 아이디어
+     - 탭바: position: fixed; bottom: 0 으로 화면 아래에 고정
+     - 본문 아래쪽에 탭바 높이만큼 padding-bottom 을 줘야
+       마지막 내용이 탭바에 가려지지 않습니다. (자주 하는 실수)
+     - 탭을 누르면 화면(패널)을 갈아 끼웁니다.
+     ============================================================ -->
+
+<style>
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
+    background: #f6f7f9;
+    color: #1f2430;
+    font-size: 14px;
+  }
+
+  /* ---------- 상단 앱바 ---------- */
+  .appbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    height: 52px;
+    padding: 0 16px;
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .appbar__title { font-weight: 700; font-size: 15px; }
+
+  .appbar__right {
+    margin-left: auto;
+    font-size: 13px;
+    color: #f76707;
+    font-weight: 600;
+  }
+
+  /* ---------- 본문 ----------
+     padding-bottom 이 탭바 높이(58px)보다 넉넉해야
+     스크롤을 끝까지 내렸을 때 마지막 카드가 가려지지 않습니다. */
+  .main { padding: 14px 14px 78px; }
+
+  .panel { display: none; }
+  .panel.is-on { display: block; }
+
+  /* 홈 화면 요소들 */
+  .banner {
+    background: linear-gradient(135deg, #f76707, #f59f00);
+    color: #fff;
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+
+  .banner__label { font-size: 12px; opacity: .9; }
+  .banner__title { font-size: 18px; font-weight: 700; margin-top: 4px; }
+  .banner__sub   { font-size: 12px; opacity: .9; margin-top: 6px; }
+
+  .quick {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .quick__item {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 12px 4px;
+    text-align: center;
+  }
+
+  .quick__icon { font-size: 18px; }
+  .quick__label { font-size: 11px; color: #6b7280; margin-top: 4px; }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #6b7280;
+    margin: 0 0 8px 2px;
+  }
+
+  /* 상품 2열 그리드 */
+  .products {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .product {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .product__img {
+    height: 92px;
+    background: #ffe8cc;
+    display: grid;
+    place-items: center;
+    font-size: 26px;
+  }
+
+  .product__body { padding: 9px 10px 11px; }
+  .product__name { font-size: 13px; font-weight: 600; }
+  .product__price { font-size: 13px; font-weight: 700; margin-top: 2px; }
+  .product__ship { font-size: 11px; color: #98a2b3; }
+
+  /* 다른 탭용 간단한 목록 */
+  .list {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 14px;
+    border-bottom: 1px solid #f1f3f5;
+  }
+
+  .row:last-child { border-bottom: 0; }
+
+  .row__thumb {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: #ffe8cc;
+    display: grid; place-items: center;
+    font-size: 17px;
+  }
+
+  .row__title { font-weight: 600; }
+  .row__desc { font-size: 12px; color: #98a2b3; }
+  .row__right { margin-left: auto; font-size: 12px; color: #98a2b3; }
+
+  /* ---------- 핵심: 하단 탭바 ---------- */
+  .tabbar {
+    position: fixed;      /* 스크롤과 무관하게 항상 같은 자리 */
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    display: flex;
+    height: 58px;
+    background: #fff;
+    border-top: 1px solid #e5e7eb;
+    /* 아이폰처럼 화면 아래에 홈 인디케이터가 있는 기기를 위한 여백.
+       해당 기기가 아니면 0 이 적용됩니다. */
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  .tabbar__btn {
+    flex: 1;                  /* 4개가 화면을 똑같이 나눠 가짐 */
+    border: 0;
+    background: transparent;
+    font: inherit;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    color: #98a2b3;
+    padding: 0;
+  }
+
+  .tabbar__icon { font-size: 17px; line-height: 1; }
+  .tabbar__label { font-size: 11px; }
+
+  /* 선택된 탭 */
+  .tabbar__btn.is-on {
+    color: #f76707;
+    font-weight: 700;
+  }
+
+  /* 알림 개수 표시(뱃지) */
+  .tabbar__icon { position: relative; }
+
+  .dot {
+    position: absolute;
+    top: -3px;
+    right: -8px;
+    min-width: 15px;
+    height: 15px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: #e03131;
+    color: #fff;
+    font-size: 9px;
+    line-height: 15px;
+    font-weight: 700;
+  }
+</style>
+</head>
+<body>
+
+  <header class="appbar">
+    <span class="appbar__title" id="appTitle">홈</span>
+    <span class="appbar__right">배송지 · 서울 성동구</span>
+  </header>
+
+  <main class="main">
+
+    <!-- 탭 1: 홈 -->
+    <section class="panel is-on" id="home">
+      <div class="banner">
+        <div class="banner__label">오늘의 특가</div>
+        <div class="banner__title">신선식품 최대 40% 할인</div>
+        <div class="banner__sub">밤 11시까지 주문하면 내일 아침 도착</div>
+      </div>
+
+      <div class="quick">
+        <div class="quick__item"><div class="quick__icon">🥬</div><div class="quick__label">채소</div></div>
+        <div class="quick__item"><div class="quick__icon">🍎</div><div class="quick__label">과일</div></div>
+        <div class="quick__item"><div class="quick__icon">🥩</div><div class="quick__label">정육</div></div>
+        <div class="quick__item"><div class="quick__icon">🍞</div><div class="quick__label">베이커리</div></div>
+      </div>
+
+      <p class="section-title">지금 인기 상품</p>
+      <div class="products">
+        <div class="product">
+          <div class="product__img">🍓</div>
+          <div class="product__body">
+            <div class="product__name">설향 딸기 500g</div>
+            <div class="product__price">₩12,900</div>
+            <div class="product__ship">새벽배송</div>
+          </div>
+        </div>
+        <div class="product">
+          <div class="product__img">🥛</div>
+          <div class="product__body">
+            <div class="product__name">유기농 우유 900ml</div>
+            <div class="product__price">₩4,200</div>
+            <div class="product__ship">새벽배송</div>
+          </div>
+        </div>
+        <div class="product">
+          <div class="product__img">🥚</div>
+          <div class="product__body">
+            <div class="product__name">무항생제 계란 20구</div>
+            <div class="product__price">₩8,700</div>
+            <div class="product__ship">내일 도착</div>
+          </div>
+        </div>
+        <div class="product">
+          <div class="product__img">🥑</div>
+          <div class="product__body">
+            <div class="product__name">아보카도 4입</div>
+            <div class="product__price">₩9,900</div>
+            <div class="product__ship">내일 도착</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 탭 2: 카테고리 -->
+    <section class="panel" id="category">
+      <p class="section-title">전체 카테고리</p>
+      <div class="list">
+        <div class="row"><div class="row__thumb">🥬</div><div><div class="row__title">채소</div><div class="row__desc">잎채소 · 뿌리채소 · 쌈채소</div></div><div class="row__right">›</div></div>
+        <div class="row"><div class="row__thumb">🍎</div><div><div class="row__title">과일</div><div class="row__desc">제철 · 수입 · 냉동</div></div><div class="row__right">›</div></div>
+        <div class="row"><div class="row__thumb">🥩</div><div><div class="row__title">정육 · 계란</div><div class="row__desc">국내산 · 수입산</div></div><div class="row__right">›</div></div>
+        <div class="row"><div class="row__thumb">🐟</div><div><div class="row__title">수산 · 건해산</div><div class="row__desc">생선 · 조개 · 건어물</div></div><div class="row__right">›</div></div>
+        <div class="row"><div class="row__thumb">🍞</div><div><div class="row__title">베이커리</div><div class="row__desc">식빵 · 디저트</div></div><div class="row__right">›</div></div>
+      </div>
+    </section>
+
+    <!-- 탭 3: 장바구니 -->
+    <section class="panel" id="cart">
+      <p class="section-title">장바구니 3건</p>
+      <div class="list">
+        <div class="row"><div class="row__thumb">🍓</div><div><div class="row__title">설향 딸기 500g</div><div class="row__desc">수량 1</div></div><div class="row__right">₩12,900</div></div>
+        <div class="row"><div class="row__thumb">🥛</div><div><div class="row__title">유기농 우유 900ml</div><div class="row__desc">수량 2</div></div><div class="row__right">₩8,400</div></div>
+        <div class="row"><div class="row__thumb">🥚</div><div><div class="row__title">무항생제 계란 20구</div><div class="row__desc">수량 1</div></div><div class="row__right">₩8,700</div></div>
+        <div class="row"><div class="row__title">결제 예상 금액</div><div class="row__right"><b>₩30,000</b></div></div>
+      </div>
+    </section>
+
+    <!-- 탭 4: 마이 -->
+    <section class="panel" id="my">
+      <p class="section-title">내 정보</p>
+      <div class="list">
+        <div class="row"><div class="row__thumb">👤</div><div><div class="row__title">이도경 님</div><div class="row__desc">일반 회원 · 적립금 3,240원</div></div></div>
+        <div class="row"><div class="row__title">주문 내역</div><div class="row__right">›</div></div>
+        <div class="row"><div class="row__title">배송지 관리</div><div class="row__right">›</div></div>
+        <div class="row"><div class="row__title">알림 설정</div><div class="row__right">›</div></div>
+        <div class="row"><div class="row__title">고객센터</div><div class="row__right">›</div></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ---------- 하단 탭바 (항상 화면 아래 고정) ---------- -->
+  <nav class="tabbar" aria-label="주 메뉴">
+    <button class="tabbar__btn is-on" data-target="home" data-title="홈">
+      <span class="tabbar__icon">▤</span>
+      <span class="tabbar__label">홈</span>
+    </button>
+    <button class="tabbar__btn" data-target="category" data-title="카테고리">
+      <span class="tabbar__icon">▦</span>
+      <span class="tabbar__label">카테고리</span>
+    </button>
+    <button class="tabbar__btn" data-target="cart" data-title="장바구니">
+      <span class="tabbar__icon">🛒<span class="dot">3</span></span>
+      <span class="tabbar__label">장바구니</span>
+    </button>
+    <button class="tabbar__btn" data-target="my" data-title="마이페이지">
+      <span class="tabbar__icon">☺</span>
+      <span class="tabbar__label">마이</span>
+    </button>
+  </nav>
+
+<script>
+  /* ------------------------------------------------------------
+     탭 전환
+
+     하단 탭은 "페이지 이동"처럼 보이지만, 실제 앱에서도
+     화면을 갈아 끼우는 방식으로 만드는 경우가 많습니다.
+     여기서도 패널을 보였다/숨겼다 합니다.
+     ------------------------------------------------------------ */
+  document.querySelector('.tabbar').addEventListener('click', function (e) {
+    var btn = e.target.closest('.tabbar__btn');
+    if (!btn) return;
+
+    // 1) 탭 선택 표시 옮기기
+    document.querySelectorAll('.tabbar__btn').forEach(function (b) {
+      b.classList.remove('is-on');
+    });
+    btn.classList.add('is-on');
+
+    // 2) 해당 패널만 보이기
+    document.querySelectorAll('.panel').forEach(function (p) {
+      p.classList.remove('is-on');
+    });
+    document.getElementById(btn.dataset.target).classList.add('is-on');
+
+    // 3) 상단 제목 갱신 + 스크롤을 맨 위로
+    document.getElementById('appTitle').textContent = btn.dataset.title;
+    window.scrollTo(0, 0);
+  });
+</script>
+</body>
+</html>

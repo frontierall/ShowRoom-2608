@@ -1,0 +1,614 @@
+/* ============================================================
+   assets/style.css  -  갤러리(껍데기) 전용 스타일
+
+   [디자인 원칙]
+   이 갤러리의 주인공은 "예제 화면"입니다.
+   그래서 갤러리 자체 UI는 색을 거의 쓰지 않고(무채색)
+   선/여백/글자 크기만으로 구조를 만듭니다.
+   갤러리가 화려하면 정작 봐야 할 예제가 묻히기 때문입니다.
+   ============================================================ */
+
+/* ---------- 0. 공통 변수 --------------------------------- */
+:root {
+  --bg:        #f5f5f5;   /* 페이지 배경 (아주 옅은 회색) */
+  --surface:   #ffffff;   /* 카드/패널 배경 */
+  --line:      #e2e2e2;   /* 기본 경계선 */
+  --line-2:    #cfcfcf;   /* 강조된 경계선 */
+  --text:      #1c1c1c;   /* 본문 글자 */
+  --text-2:    #6b6b6b;   /* 보조 글자 */
+  --text-3:    #9a9a9a;   /* 더 흐린 글자 / 비활성 */
+  --radius:    10px;
+  --shadow:    0 1px 2px rgba(0,0,0,.05);
+}
+
+/* ---------- 1. 리셋 -------------------------------------- */
+* { box-sizing: border-box; }
+
+/* hidden 속성이 붙으면 무조건 숨깁니다.
+   브라우저 기본값은 display:none 이지만 우선순위가 매우 낮아서
+   .modal { display:flex } 같은 규칙에 밀려버립니다.
+   그래서 !important 로 확실히 이기게 해 둡니다. */
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+               "Malgun Gothic", "맑은 고딕", Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 모달이 열려 있는 동안 뒤쪽 페이지가 스크롤되지 않도록 잠급니다.
+   (app.js 가 body 태그에 이 클래스를 붙였다 뗐다 합니다.) */
+body.is-locked { overflow: hidden; }
+
+ul { margin: 0; padding: 0; list-style: none; }
+button { font: inherit; color: inherit; }
+
+/* ============================================================
+   [1층] 상단 가로 탭 - 갤러리 전환
+   ============================================================ */
+.topbar {
+  position: sticky;          /* 스크롤해도 위에 붙어 있게 */
+  top: 0;
+  z-index: 10;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.topbar__inner {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 14px 24px 0;
+}
+
+.topbar__title {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -.2px;
+  color: var(--text-2);
+}
+
+/* 탭 버튼 줄 */
+.tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.tab {
+  padding: 9px 14px;
+  border: 0;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 14px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;  /* 선택 표시용 밑줄 자리 */
+  margin-bottom: -1px;                   /* topbar 아래 선과 겹치게 */
+}
+
+.tab:hover { color: var(--text); }
+
+/* 현재 보고 있는 갤러리 */
+.tab.is-active {
+  color: var(--text);
+  font-weight: 600;
+  border-bottom-color: var(--text);
+}
+
+/* 예제가 아직 없는 갤러리(홈페이지/디자인)는 비활성으로 보여줍니다. */
+.tab:disabled {
+  color: var(--text-3);
+  cursor: not-allowed;
+}
+
+.tab__badge {
+  margin-left: 6px;
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+/* ============================================================
+   [2층 + 3층] 좌측 사이드바 + 본문
+   ============================================================ */
+.layout {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 24px;
+  display: grid;
+  grid-template-columns: 190px 1fr;   /* 왼쪽 필터 190px, 나머지는 본문 */
+  gap: 28px;
+  align-items: start;
+}
+
+/* ---------- [2층] 분류 필터 ------------------------------ */
+.sidebar {
+  position: sticky;
+  top: 92px;      /* 상단 탭 높이만큼 내려서 고정 */
+}
+
+.sidebar__label {
+  margin: 0 0 8px;
+  padding-left: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  color: var(--text-3);
+}
+
+.filters { display: flex; flex-direction: column; gap: 2px; }
+
+/* 필터 버튼 하나 */
+.filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.filter:hover { background: #ececec; color: var(--text); }
+
+/* 선택된 필터.
+   "이동"이 아니라 "필터 선택"임이 드러나도록
+   화살표가 아니라 체크 표시를 왼쪽에 둡니다. */
+.filter.is-on {
+  background: #e9e9e9;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.filter__check {
+  width: 14px;
+  flex: 0 0 14px;
+  color: var(--text);
+  opacity: 0;              /* 평소엔 자리만 차지하고 안 보임 */
+  font-size: 12px;
+}
+
+.filter.is-on .filter__check { opacity: 1; }
+
+.filter__count {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text-3);
+  font-weight: 400;
+}
+
+/* ---------- [3층] 본문 ----------------------------------- */
+.content__status {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+/* 카드 그리드: 기본 3열 */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+/* 카드 = 라이브 미리보기 + 제목 + 한 줄 요약.
+   button 태그로 만들어서 카드 전체가 클릭 영역이 되고
+   키보드 Tab/Enter 로도 열 수 있게 했습니다. */
+.card {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color .15s, box-shadow .15s, transform .15s;
+}
+
+.card:hover {
+  border-color: var(--line-2);
+  box-shadow: 0 4px 14px rgba(0,0,0,.08);
+  transform: translateY(-2px);
+}
+
+/* ---------- 카드 라이브 미리보기 -------------------------- */
+/* 썸네일 영역: 실제 iframe 을 축소해서 넣습니다(스크린샷 아님). */
+.thumb {
+  position: relative;
+  aspect-ratio: 16 / 10;         /* 카드 썸네일 비율 고정 */
+  overflow: hidden;              /* 축소해도 넘치는 부분은 잘라냄 */
+  background: #fafafa;
+  border-bottom: 1px solid var(--line);
+  pointer-events: none;          /* 썸네일 안 클릭은 무시 -> 카드 클릭으로 */
+}
+
+/* iframe 을 감싸는 상자. 이 상자를 scale 로 줄입니다.
+   - 데스크톱용: 컨테이너보다 1/0.35 = 285.714% 크게 잡고 0.35배로 축소
+   - transform-origin: top left 이므로 왼쪽 위를 기준으로 줄어듭니다. */
+.thumb__scaler {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 285.714%;
+  height: 285.714%;
+  transform: scale(0.35);
+  transform-origin: top left;
+}
+
+/* 모바일용 예제(드로어/하단탭바)는 좁은 화면에서 봐야 의미가 있습니다.
+   그래서 폭 390px 짜리 화면을 만들어 가운데에 두고 같은 비율로 축소합니다. */
+.thumb__scaler--mobile {
+  left: 50%;
+  width: 390px;
+  height: 780px;
+  margin-left: -195px;                /* 폭의 절반만큼 왼쪽으로 -> 가운데 정렬 */
+  transform: scale(0.35);
+  transform-origin: top center;
+}
+
+.thumb iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  overflow: hidden;      /* 썸네일에서는 스크롤바를 숨김 */
+  pointer-events: none;  /* 미리보기는 조작 불가(카드 클릭이 우선) */
+  background: #fff;
+}
+
+/* 모바일 썸네일은 좌우 여백이 생기므로 배경을 살짝 눌러 구분 */
+.thumb--mobile { background: #eeeeee; }
+
+.card__body { padding: 12px 14px 14px; }
+
+.card__title {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.card__summary {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+/* ---------- 빈 상태 -------------------------------------- */
+.empty {
+  padding: 60px 20px;
+  text-align: center;
+  border: 1px dashed var(--line-2);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.empty__title { margin: 0 0 6px; font-weight: 600; }
+.empty__desc  { margin: 0; font-size: 13px; color: var(--text-2); }
+
+/* ============================================================
+   상세 오버레이 모달
+   ============================================================ */
+.modal {
+  position: fixed;
+  inset: 0;               /* top/right/bottom/left 를 모두 0 으로 */
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+/* 뒤쪽 화면을 어둡게 덮는 층. 클릭하면 닫힙니다. */
+.modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(20, 20, 20, .45);
+}
+
+.modal__panel {
+  position: relative;     /* backdrop 위로 올라오도록 */
+  display: flex;
+  flex-direction: column;
+  width: min(1180px, 100%);
+  max-height: 100%;
+  background: var(--surface);
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.3);
+  overflow: hidden;
+}
+
+.modal__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.modal__title { margin: 0; font-size: 15px; font-weight: 600; }
+
+.iconbtn {
+  margin-left: auto;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface);
+  font-size: 18px;
+  line-height: 1;
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+.iconbtn:hover { background: #f0f0f0; color: var(--text); }
+
+/* ---------- 폭 전환 세그먼티드 컨트롤 --------------------- */
+.modal__tools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.segmented {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f2f2f2;
+}
+
+.segmented button {
+  padding: 5px 12px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* 선택된 버튼만 흰 배경으로 떠 보이게 */
+.segmented button.is-on {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: var(--shadow);
+}
+
+.newtab {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--text-2);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line-2);
+}
+
+.newtab:hover { color: var(--text); }
+
+/* ---------- 미리보기 무대 + 브라우저 창 프레임 ------------ */
+/* 예제와 갤러리를 눈으로 구분하기 위해,
+   예제는 반드시 "브라우저 창" 모양 프레임 안에서 보여줍니다. */
+.stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  justify-content: center;    /* 폭이 줄어들면 가운데로 모임 */
+  padding: 20px;
+  background: #ededed;        /* 무대 바닥은 살짝 어두운 회색 */
+  overflow: auto;
+}
+
+.browser {
+  display: flex;
+  flex-direction: column;
+  width: 100%;                       /* 기본: 데스크톱(100%) */
+  height: clamp(360px, 58vh, 620px); /* 화면 높이에 맞춰 유연하게 */
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: 0 6px 24px rgba(0,0,0,.12);
+  overflow: hidden;
+  transition: width .18s ease;       /* 폭 전환이 부드럽게 보이도록 */
+}
+
+/* 세그먼티드 컨트롤이 바꾸는 것은 "프레임의 폭" 하나뿐입니다.
+   폭이 바뀌면 예제 안의 미디어쿼리가 실제로 반응합니다. */
+.browser--desktop { width: 100%; }
+.browser--tablet  { width: 768px; max-width: 100%; }
+.browser--mobile  { width: 390px; max-width: 100%; }
+
+/* 창 상단 바 + 신호등 점 3개 */
+.browser__bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #f0f0f0;
+  border-bottom: 1px solid var(--line);
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot--red    { background: #e06c5f; }
+.dot--yellow { background: #e2b04a; }
+.dot--green  { background: #61b567; }
+
+.browser__url {
+  margin-left: 10px;
+  padding: 2px 10px;
+  flex: 1 1 auto;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  font-size: 11px;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.browser__body { flex: 1 1 auto; min-height: 0; }
+
+.browser__body iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  background: #fff;
+}
+
+/* ---------- 접이식 설명 패널 ----------------------------- */
+.notes {
+  flex: 0 0 auto;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+  max-height: 34vh;
+  overflow: auto;
+}
+
+.notes__summary {
+  padding: 11px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+  cursor: pointer;
+  list-style: none;          /* 기본 삼각형 마커 숨김 */
+  user-select: none;
+}
+
+.notes__summary::-webkit-details-marker { display: none; }
+
+/* 직접 만든 화살표. 열리면 90도 돌아갑니다. */
+.notes__summary::before {
+  content: "\25B8";
+  display: inline-block;
+  margin-right: 8px;
+  color: var(--text-3);
+  transition: transform .15s;
+}
+
+.notes[open] .notes__summary::before { transform: rotate(90deg); }
+
+.notes__body {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  gap: 24px;
+  padding: 4px 18px 20px;
+}
+
+.note__title {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  color: var(--text-3);
+}
+
+.note__when { margin: 0; font-size: 13px; color: var(--text-2); }
+
+.note__list { font-size: 13px; color: var(--text-2); }
+
+.note__list li {
+  position: relative;
+  padding-left: 12px;
+  margin-bottom: 3px;
+}
+
+.note__list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  width: 4px;
+  height: 1px;
+  background: var(--text-3);
+}
+
+/* ============================================================
+   반응형
+   ============================================================ */
+
+/* 1100px 이하: 카드 3열 -> 2열 */
+@media (max-width: 1100px) {
+  .grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* 900px 이하:
+   - 좌측 사이드바를 없애고 필터를 "상단 가로 칩 줄"로 바꿉니다.
+   - 모달 설명 패널도 한 줄씩 쌓습니다. */
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;   /* 한 줄로 */
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .sidebar {
+    position: static;             /* 고정 해제 */
+  }
+
+  .sidebar__label { padding-left: 0; }
+
+  /* 칩이 가로로 늘어서고, 넘치면 좌우 스크롤 */
+  .filters {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .filter {
+    width: auto;
+    flex: 0 0 auto;
+    padding: 6px 12px;
+    border: 1px solid var(--line);
+    border-radius: 999px;         /* 알약(칩) 모양 */
+    background: var(--surface);
+    white-space: nowrap;
+  }
+
+  .filter.is-on {
+    border-color: var(--text);
+    background: var(--surface);
+  }
+
+  .filter__count { display: none; } /* 칩에서는 개수 숨겨 폭 절약 */
+
+  .modal { padding: 0; }
+  .modal__panel { border-radius: 0; height: 100%; width: 100%; }
+  .stage { padding: 12px; }
+  .browser { height: clamp(300px, 46vh, 520px); }
+  .notes__body { grid-template-columns: 1fr; gap: 14px; }
+}
+
+/* 640px 이하: 카드 2열 -> 1열 */
+@media (max-width: 640px) {
+  .grid { grid-template-columns: 1fr; }
+  .modal__tools { flex-wrap: wrap; }
+  .newtab { margin-left: 0; }
+}
