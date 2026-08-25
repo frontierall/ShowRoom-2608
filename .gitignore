@@ -9,5 +9,7 @@ Desktop.ini
 .idea/
 *.swp
 
-# 훅이 자동 생성하는 세션 로그 (로컬에만 둠)
+# 작업 로그 (훅이 최상위 폴더 D:\Github_Frontierall\worklog.md 에 기록하므로
+# 레포 안에는 생기지 않지만, 예전 방식으로 되돌아갈 경우를 대비해 남겨둠)
+worklog.md
 docs/worklog.md
