@@ -9,7 +9,8 @@ Desktop.ini
 .idea/
 *.swp
 
-# 작업 로그 (훅이 최상위 폴더 D:\Github_Frontierall\worklog.md 에 기록하므로
-# 레포 안에는 생기지 않지만, 예전 방식으로 되돌아갈 경우를 대비해 남겨둠)
-worklog.md
-docs/worklog.md
+# 작업 로그
+# 훅이 최상위 폴더(D:\Github_Frontierall\worklog_claude.md)에 기록하므로
+# 레포 안에는 생기지 않지만, 도구별 파일이 흘러들어오는 경우를 대비해 막아둔다.
+worklog*.md
+docs/worklog*.md
