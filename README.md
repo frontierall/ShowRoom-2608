@@ -3,9 +3,12 @@
 UX·UI 메뉴 패턴 예제를 모아 보여주는 **정적 갤러리**입니다.
 빌드 도구·프레임워크·npm 패키지를 쓰지 않습니다.
 
+**공개 주소 → https://frontierall.github.io/ShowRoom-2608/**
+
 ## 실행 방법
 
-`gallery/index.html` 을 **더블클릭**하면 끝입니다. 서버가 필요 없습니다.
+브라우저에서 위 주소를 열거나, 내려받아 `gallery/index.html` 을 **더블클릭**하면 됩니다.
+서버가 필요 없습니다.
 
 > 데이터를 `fetch()` 나 JSON 파일이 아니라 `window.GALLERY_DATA` 전역 변수로 넣어 둔 이유가 이것입니다.
 > `file://` 로 열면 보안 정책(CORS) 때문에 `fetch()` 가 막힙니다.
