@@ -8,3 +8,6 @@ Desktop.ini
 .vscode/
 .idea/
 *.swp
+
+# 훅이 자동 생성하는 세션 로그 (로컬에만 둠)
+docs/worklog.md
